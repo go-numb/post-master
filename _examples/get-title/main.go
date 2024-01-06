@@ -29,9 +29,9 @@ func main() {
 	defer client.Close()
 
 	// テスト用: プログラムをいつまで実行をするか
-	time.Sleep(3 * time.Second)
+	time.Sleep(3 * time.Minute)
 	cancel()
-	time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Minute)
 	log.Info().Msg("正しく終了")
 }
 
