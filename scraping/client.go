@@ -52,7 +52,7 @@ func (p *Client) ChangeTargetURI(uri string) error {
 }
 
 func (p *Client) Start(ctx context.Context, f func(playwright.Page) (string, error)) {
-	t := time.NewTicker(time.Duration(p.TermMinits) * time.Second)
+	t := time.NewTicker(time.Duration(p.TermMinits) * time.Minute)
 	defer t.Stop()
 
 	// スクレイピング実行関数を登録する

@@ -34,11 +34,20 @@ func (p *Client) do() error {
 	// log.Debug().Msgf("%#v\n", s)
 
 	// Scrap & Save
-	nextRawURI, err := p.f(page)
-	if err != nil {
-		return err
+	for {
+		nextRawURI, err := p.f(page)
+		if err != nil {
+			return err
+		}
+		if nextRawURI == "" {
+			log.Info().Msg("next url unspecified")
+			break
+		}
+		if err := p.ChangeTargetURI(nextRawURI); err != nil {
+			return err
+		}
 	}
-	if err := p.ChangeTargetURI(nextRawURI); err != nil {
+	if err != nil {
 		return err
 	}
 
