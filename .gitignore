@@ -1,0 +1,8 @@
+*.sqlite3
+*.md
+*_test.go
+
+.vscode
+*.toml
+
+!README.md
