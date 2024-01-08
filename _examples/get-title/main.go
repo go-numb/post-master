@@ -12,14 +12,22 @@ import (
 	"github.com/google/uuid"
 	"github.com/playwright-community/playwright-go"
 	"github.com/rs/zerolog/log"
+
+	"cloud.google.com/go/storage"
 )
 
 const (
+	// IsLocal 保存場所をローカルとGCSで分岐
+	IsLocal = true
+
 	TermMinutes = 1
 	BaseRawURI  = "https://bun.uptrace.dev/guide/query-update.html"
 	PostToDir   = "./post/"
 
 	DBPATH = "./db.sqlite3"
+
+	// Google Schedule バケツ名
+	GCSBUCKETNAME = "hugo-storage-xxx.com"
 )
 
 func main() {
@@ -76,9 +84,16 @@ func F(page playwright.Page) (string, error) {
 		return "", err
 	}
 
-	// ファイルに保存
-	if err := toFile(data); err != nil {
-		return "", err
+	if IsLocal {
+		// ファイルに保存
+		if err := toFile(data); err != nil {
+			return "", err
+		}
+	} else {
+		// ファイルに保存
+		if err := saveFileToGCS(data); err != nil {
+			return "", err
+		}
 	}
 
 	links, err := page.Locator("a").All()
@@ -151,6 +166,35 @@ func toFile(data *Data) error {
 	defer f.Close()
 
 	f.WriteString(toString(data))
+
+	return nil
+}
+
+func saveFileToGCS(data *Data) error {
+	// GCSクライアントの初期化
+	client, err := storage.NewClient(context.Background())
+	if err != nil {
+		log.Fatal().Msgf("Failed to create GCS client: %v", err)
+		return err
+	}
+	defer client.Close()
+
+	// 保存するファイルの名前
+	uuid := uuid.New()
+	destFileName := fmt.Sprintf("%s%s.md", PostToDir, uuid.String())
+
+	// GCSバケットへファイルを保存
+	bucket := client.Bucket(GCSBUCKETNAME)
+	obj := bucket.Object(destFileName)
+	writer := obj.NewWriter(ctx)
+	defer writer.Close()
+
+	if _, err := writer.Write([]byte(toString(data))); err != nil {
+		log.Info().Msgf("Failed to write data to GCS: %v", err)
+		return err
+	}
+
+	fmt.Printf("File %s uploaded to GCS bucket %s\n", destFileName, GCSBUCKETNAME)
 
 	return nil
 }

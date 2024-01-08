@@ -4,5 +4,6 @@
 
 .vscode
 *.toml
+_examples/get-title/next-service-xxx.com
 
 !README.md
